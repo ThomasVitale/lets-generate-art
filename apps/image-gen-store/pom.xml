@@ -51,6 +51,13 @@
     		<artifactId>arconia-opentelemetry-spring-boot-starter</artifactId>
 		</dependency>
 
+		<!-- <dependency>
+			<groupId>io.arconia</groupId>
+			<artifactId>arconia-dev-services-lgtm</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency> -->
+
 
 		<!-- <dependency>
 			<groupId>io.opentelemetry.instrumentation</groupId>

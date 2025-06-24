@@ -45,13 +45,14 @@ public class ImagegenstoreApplication {
 
 			span.setAttribute("url", url);
 
-			span.end();
 			System.out.println("URL: " + url);
 
 			var bodilessEntity = rc.post()
 					.uri( uriBuilder -> uriBuilder  .queryParam("prompt", prompt).queryParam("url", url).build())
 					.retrieve().toBodilessEntity();
 			Assert.state(bodilessEntity.getStatusCode().is2xxSuccessful(), "Failed to post to database");
+
+			span.end();
 		};
 	}
 

@@ -10,8 +10,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.env.Environment;
 import org.springframework.util.Assert;
 import org.springframework.web.client.RestClient;
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.Tracer;
+
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.Tracer;
 
 @SpringBootApplication
 public class ImagegenstoreApplication {
@@ -36,26 +37,25 @@ public class ImagegenstoreApplication {
 			System.out.println("Environment: " + env.getProperty("AI_PROMPT"));
 			System.out.println("Environment: " + env.getProperty("DB_SERVICE_URL"));
 			
-			Span span = tracer.spanBuilder("prompt")
-					.setAttribute("prompt", prompt)
-					.startSpan();
+			Span span = tracer.nextSpan().name("image-client").tag(prompt, "prompt");
 
-			var response = imageModel.call(new ImagePrompt(prompt));
-			var url = response.getResult().getOutput().getUrl();
+			try (var tracingScope = tracer.withSpan(span.start())) {
+				var response = imageModel.call(new ImagePrompt(prompt));
+				var url = response.getResult().getOutput().getUrl();
 
-			span.setAttribute("url", url);
+				span.tag("url", url);
 
-			System.out.println("URL: " + url);
+				System.out.println("URL: " + url);
 
-			var bodilessEntity = rc.post()
-					.uri( uriBuilder -> uriBuilder  .queryParam("prompt", prompt).queryParam("url", url).build())
-					.retrieve().toBodilessEntity();
-			Assert.state(bodilessEntity.getStatusCode().is2xxSuccessful(), "Failed to post to database");
-
-			span.end();
+				var bodilessEntity = rc.post()
+						.uri( uriBuilder -> uriBuilder  .queryParam("prompt", prompt).queryParam("url", url).build())
+						.retrieve().toBodilessEntity();
+				Assert.state(bodilessEntity.getStatusCode().is2xxSuccessful(), "Failed to post to database");
+			} finally {
+				span.end();
+			}
 		};
 	}
-
 
 }
 
